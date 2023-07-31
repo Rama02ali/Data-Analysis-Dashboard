@@ -1,0 +1,38 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import warnings
+import os
+
+warnings.filterwarnings('ignore')
+
+st.set_page_config(page_title="supermarket", page_icon=':bar_chart:', layout='wide')
+st.title(':bar_chart: supermarket_sales')
+st.markdown('<style>div.block_container{padding-top:1rem;}<style>', unsafe_allow_html=True)
+
+st.header('Single File Upload')
+uploaded_file = st.file_uploader('Upload a file', type=None)
+
+# Check if a file is uploaded
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file, encoding='ISO-8859-1')
+    st.write(df)
+else:
+    st.write("Please upload a file to proceed.")
+
+# Move the code below inside the scope where df is defined
+# col1, col2 = st.columns((2))
+# df['order date'] = pd.to_datetime(df['order date'])
+
+# start_date = pd.to_datetime(df['order date']).min()
+# end_date = pd.to_datetime(df['order date']).max()
+
+# with col1:
+#     date1 = pd.to_datetime(st.date_input('start date', start_date))
+# with col2:
+#     date2 = pd.to_datetime(st.date_input('end date', end_date))
+
+# df = df[(df['order date'] >= date1) & (df['order date'] <= date2)].copy()
+
+
+

@@ -1,0 +1,82 @@
+import panel as pn
+import hvplot.pandas
+import holoviews as hv
+
+pn.extension('tabulator', sizing_mode="stretch_width")
+hv.extension('bokeh')
+
+def environment():
+    try:
+        get_ipython()
+        return "notebook"
+    except:
+        return "server"
+
+PALETTE = ["#ff6f69", "#ffcc5c", "#88d8b0"]
+
+def process_data(df):
+    # Your data processing logic here
+    # Modify the data processing according to your specific dataset and requirements
+    return df
+
+# Function to handle file upload and update the dashboard
+def on_file_upload(event):
+    uploaded_file = event.new
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        processed_df = process_data(df)
+
+        # Update the data in the Tabulator and hvplot
+        itable.value = processed_df
+        ihvplot.data = processed_df
+
+# Create the widgets for file upload and dashboard controls
+file_input = pn.widgets.FileInput()
+file_input.link(file_input, callbacks={'value': on_file_upload})
+
+cylinders = pn.widgets.IntSlider(name='Cylinders', start=4, end=8, step=2)
+mfr = pn.widgets.ToggleGroup(
+    name='MFR',
+    options=['ford', 'chevrolet', 'honda', 'toyota', 'audi'], 
+    value=['ford', 'chevrolet', 'honda', 'toyota', 'audi'],
+    button_type='success')
+yaxis = pn.widgets.RadioButtonGroup(
+    name='Y axis', 
+    options=['hp', 'weight'],
+    button_type='success'
+)
+
+# Create placeholders for the hvplot and Tabulator
+ihvplot = hvplot_data = hv.Points([]).opts(height=400)
+
+# Create a placeholder for the Tabulator
+itable = pn.widgets.Tabulator([], pagination='remote', page_size=10)
+
+# Create a function to update the data based on the selected options
+def update_data():
+    selected_df = df[
+        (df.cyl == cylinders.value) &
+        (df.mfr.isin(mfr.value))
+    ].groupby(['origin', 'mpg'])[yaxis.value].mean().to_frame().reset_index().sort_values(by='mpg').reset_index(drop=True)
+    itable.value = selected_df
+    ihvplot.data = selected_df
+
+# Add event callbacks to update the data when the widgets are changed
+cylinders.param.watch(update_data, 'value')
+mfr.param.watch(update_data, 'value')
+yaxis.param.watch(update_data, 'value')
+
+# Create the main panel
+main_panel = pn.Row(
+    pn.Column(file_input, pn.Spacer(height=20), cylinders, 'Manufacturers', mfr, 'Y axis', yaxis),
+    pn.Column(ihvplot, itable)
+)
+
+# Create the template
+template = pn.template.FastListTemplate(
+    title='Interactive DataFrame Dashboards with hvplot .interactive',
+    sidebar=[main_panel],
+    accent_base_color="#88d8b0",
+    header_background="#88d8b0",
+)
+template.servable()
